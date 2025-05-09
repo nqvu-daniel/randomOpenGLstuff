@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/danielqvu/Documents/GitHub/randomOpenGLstuff/fastLearningOpengl/app'
+relocations:     []
+...

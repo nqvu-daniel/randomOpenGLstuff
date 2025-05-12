@@ -20,6 +20,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source){
         glDeleteShader(id);
         return 0;
     }
+    return id;
 };
 
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader){
@@ -45,10 +46,11 @@ void processInput(GLFWwindow *window);
 int main(){
 
     glfwInit();
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing (MSAA)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // apple
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 
@@ -118,7 +120,6 @@ int main(){
         // rendering command
         //glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // <-- state setting function
         glClear(GL_COLOR_BUFFER_BIT); // <-- state using function
-
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // event checks n calls; buffer swap

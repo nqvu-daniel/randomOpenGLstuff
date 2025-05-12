@@ -1,6 +1,38 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <fstream>
+#include <sstream>
+#include <string>
+
+struct ShaderProgramSource{
+    std::string VertexSource;
+    std::string FragmentSource;
+};
+static ShaderProgramSource ParseShader(const std::string& filepath){
+    std::fstream stream(filepath);
+    std::string line;
+    
+    enum class ShaderType{
+        NONE = -1, VERTEX = 0, FRAGMENT = 1};
+    ShaderType type = ShaderType::NONE;
+
+    std::stringstream ss[2];
+
+    while (getline(stream, line)){
+        if (line.find("#shader") != std::string::npos){
+            if (line.find("vertex") != std::string::npos){
+                type = ShaderType::VERTEX;
+            } else if (line.find("fragment") != std::string::npos){
+                type = ShaderType::FRAGMENT;
+            }
+        } else {
+            ss[(int)type] << line << '\n';
+        }
+    };
+    return {ss[0].str(), ss[1].str()};
+};
+
 
 static unsigned int CompileShader(unsigned int type, const std::string& source){
     unsigned int id = glCreateShader(type);
@@ -20,6 +52,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source){
         glDeleteShader(id);
         return 0;
     }
+    return id;
 };
 
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader){
@@ -90,25 +123,13 @@ int main(){
     glEnableVertexAttribArray(0);
 
     //shader
-    std::string vertexShader = 
-        "#version 330 core\n"
-        "layout(location = 0) in vec4 position;\n" // <-- location is the index of the attribute in the vertex data  :3
-        "void main()\n"
-        "{\n"
-        "gl_Position = position;\n"
-        "}\n";
+    ShaderProgramSource source = ParseShader("res/Shaders/Basic.shader");
+    std::cout << "Vertex" << std::endl;
+    std::cout << source.VertexSource << std::endl;
+    std::cout << "Fragment" << std::endl;
+    std::cout << source.FragmentSource << std::endl;
 
-
-    std::string fragmentShader =
-        "#version 330 core\n"
-        "layout(location = 0) out vec4 FragColor;\n"
-        "void main()\n"
-        "{\n"
-        "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n" // rgba
-        "}\n";
-
-
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
     
     // render loops
@@ -120,13 +141,17 @@ int main(){
         glClear(GL_COLOR_BUFFER_BIT); // <-- state using function
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
-
+                // update shader uniform
+                double  timeValue = glfwGetTime();
+                float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
+                int vertexColorLocation = glGetUniformLocation(shader, "ourColor");
+                glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
         // event checks n calls; buffer swap
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-
+    glDeleteProgram(shader);
     glfwTerminate();
     return 0;
 };

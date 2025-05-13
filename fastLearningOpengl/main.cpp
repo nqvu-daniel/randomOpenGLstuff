@@ -27,7 +27,8 @@ static ShaderProgramSource ParseShader(const std::string& filepath){
                 type = ShaderType::FRAGMENT;
             }
         } else {
-            ss[(int)type] << line << '\n';
+            if(type != ShaderType::NONE){
+                ss[(int)type] << line << '\n';};
         }
     };
     return {ss[0].str(), ss[1].str()};
@@ -103,20 +104,31 @@ int main(){
     glViewport(0, 0, 800, 600);
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
 
-    float vertices[9] = {
+    float vertices[] = {
         -0.5f, -0.5f, 0.0f,
          0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+         0.5f,  0.5f, 0.0f,
+         -0.5f, 0.5f, 0.0f
+    };
+
+    unsigned int indices[] = {
+        0,1,2,
+        0,2,3
+
     };
 
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
@@ -140,12 +152,18 @@ int main(){
         //glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // <-- state setting function
         glClear(GL_COLOR_BUFFER_BIT); // <-- state using function
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-                // update shader uniform
-                double  timeValue = glfwGetTime();
-                float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
-                int vertexColorLocation = glGetUniformLocation(shader, "ourColor");
-                glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+        // 6 being the number of INDICES; nullptr cuz we bounded the EBO earlier, so no need to specify the vertices again
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+
+        // update shader uniform
+        double  timeValue = glfwGetTime();
+        float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
+        int vertexColorLocation = glGetUniformLocation(shader, "ourColor");
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+
         // event checks n calls; buffer swap
         glfwSwapBuffers(window);
         glfwPollEvents();

@@ -4,6 +4,29 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <cassert>
+
+#define DEBUG
+
+#ifdef DEBUG
+    #define glCall(x) glClearError(); x; assert(glLogCall())
+#else
+    #define glCall(x) x
+#endif
+// error checking code
+
+static void glClearError(){
+    while(glGetError()!= GL_NO_ERROR);
+}
+
+static bool glLogCall(){
+    while(GLenum error = glGetError()){
+        std::cerr << "\n[OpenGL Error] (" << error << ")\n"
+                  << "----------------------------------------\n";
+        return false;
+    }
+    return true;
+}
 
 struct ShaderProgramSource{
     std::string VertexSource;
@@ -154,8 +177,8 @@ int main(){
 
 
         // 6 being the number of INDICES; nullptr cuz we bounded the EBO earlier, so no need to specify the vertices again
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
+        glCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        // would give nothing if type is GL_INT => ALL index buffer must be of type GL_UNSIGNED_INT
 
         // update shader uniform
         double  timeValue = glfwGetTime();

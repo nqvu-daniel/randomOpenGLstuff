@@ -16,7 +16,7 @@
 // error checking code
 
 static void glClearError(){
-    while(glGetError() != GL_NO_ERROR);
+    while(glGetError()!= GL_NO_ERROR);
 }
 
 static bool glLogCall(){
@@ -59,21 +59,22 @@ static ShaderProgramSource ParseShader(const std::string& filepath){
 
 
 static unsigned int CompileShader(unsigned int type, const std::string& source){
-    unsigned int id = glCall(glCreateShader(type));
+    glCall(unsigned int id = glCreateShader(type));
     const char* src = source.c_str();
     glCall(glShaderSource(id, 1, &src, nullptr));
     glCall(glCompileShader(id));
 
     int result;
     glCall(glGetShaderiv(id, GL_COMPILE_STATUS, &result));
+    std::cout << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader compile status: " << result << std::endl;
+
+
     if(result == GL_FALSE){
         int length;
         glCall(glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length));
         char* message = (char*)alloca(length * sizeof(char));
         glCall(glGetShaderInfoLog(id, length, &length, message));
-        std::cout << "Failed to compile " 
-                  << (type == GL_VERTEX_SHADER ? "vertex" : "fragment")
-                  << " shader!" << std::endl;
+        std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
         std::cout << message << std::endl;
         glCall(glDeleteShader(id));
         return 0;
@@ -84,7 +85,7 @@ static unsigned int CompileShader(unsigned int type, const std::string& source){
 static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader){
     // taking in the actual source code of these shaders as strings.
 
-    unsigned int program = glCall(glCreateProgram());
+    unsigned int program = glCreateProgram();
     unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
     unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
     glCall(glAttachShader(program, vs));
@@ -139,6 +140,7 @@ int main(){
     unsigned int indices[] = {
         0,1,2,
         0,2,3
+
     };
 
     unsigned int VAO;
@@ -165,7 +167,7 @@ int main(){
     std::cout << "Fragment" << std::endl;
     std::cout << source.FragmentSource << std::endl;
 
-    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
+     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glCall(glUseProgram(shader));
     
     // render loops
@@ -176,6 +178,7 @@ int main(){
         //glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // <-- state setting function
         glCall(glClear(GL_COLOR_BUFFER_BIT)); // <-- state using function
 
+
         // 6 being the number of INDICES; nullptr cuz we bounded the EBO earlier, so no need to specify the vertices again
         glCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
         // would give nothing if type is GL_INT => ALL index buffer must be of type GL_UNSIGNED_INT
@@ -183,7 +186,7 @@ int main(){
         // update shader uniform
         double  timeValue = glfwGetTime();
         float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
-        int vertexColorLocation = glCall(glGetUniformLocation(shader, "ourColor"));
+        glCall(int vertexColorLocation = glGetUniformLocation(shader, "ourColor"));
         glCall(glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f));
 
 

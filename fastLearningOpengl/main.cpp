@@ -170,6 +170,8 @@ int main(){
      unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glCall(glUseProgram(shader));
     
+    float tempRed = 0.0f;
+    float increment = 0.05f;
     // render loops
     while(!glfwWindowShouldClose(window)){
         processInput(window);
@@ -187,7 +189,15 @@ int main(){
         double  timeValue = glfwGetTime();
         float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
         glCall(int vertexColorLocation = glGetUniformLocation(shader, "ourColor"));
-        glCall(glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f));
+        glCall(glUniform4f(vertexColorLocation, tempRed, greenValue, 0.0f, 1.0f));
+
+        // update red value
+        tempRed += increment;
+        if (tempRed > 1.0f){
+            increment = -0.05f;
+        } else if (tempRed < 0.0f){
+            increment = 0.05f;
+        }
 
 
         // event checks n calls; buffer swap

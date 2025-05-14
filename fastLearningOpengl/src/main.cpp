@@ -9,7 +9,7 @@
 
 #include "VertexBuffer.h"
 #include "ElementIndexBuffer.h"
-
+#include "VertexArray.h"
 // #undef DEBUG
 
 struct ShaderProgramSource{
@@ -135,29 +135,33 @@ int main(){
 
     };
 
-    unsigned int VAO;
-    glCall(glGenVertexArrays(1, &VAO));
-    glCall(glBindVertexArray(VAO));
+//    unsigned int VAO;
+//    glCall(glGenVertexArrays(1, &VAO));
+//    glCall(glBindVertexArray(VAO));
 
-    unsigned int EBO;
-    glCall(glGenBuffers(1, &EBO));
-    glCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
-    glCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+    // temp disable
+//    unsigned int EBO;
+//    glCall(glGenBuffers(1, &EBO));
+//    glCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
+//    glCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
+//
+//
+//    unsigned int VBO;
+//    glCall(glGenBuffers(1, &VBO));
+//    glCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+//    glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
 
-    unsigned int VBO;
-    glCall(glGenBuffers(1, &VBO));
-    glCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-
-
+    VertexArray VAO;
 
     VertexBuffer vb(vertices, sizeof(vertices));
+    VertexBufferLayout layout;
+    layout.Push<float>(3); // 3 floats per vertex
+    VAO.AddBuffer(vb, layout);
     // already bounded in the intialization of VertexBuffer
     // multiple VBO => manual binding of choosing => handled by the vertex array anyways lol
 
-    glCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0));
-    glCall(glEnableVertexAttribArray(0));
+
 
     ElementIndexBuffer ebo(indices, sizeof(indices)); // similar to VBO
 
@@ -190,7 +194,8 @@ int main(){
 
         // bind and do stuff
         glCall(glUseProgram(shader));
-        glCall(glBindVertexArray(VAO));
+        // bind vertex array
+        VAO.Bind();
         ebo.Bind();
 
 

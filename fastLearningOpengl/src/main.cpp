@@ -4,29 +4,13 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <cassert>
-
+#include "Renderer.h"
 #define DEBUG
 
-#ifdef DEBUG
-    #define glCall(x) glClearError(); x; assert(glLogCall())
-#else
-    #define glCall(x) x
-#endif
-// error checking code
+#include "VertexBuffer.h"
+#include "ElementIndexBuffer.h"
 
-static void glClearError(){
-    while(glGetError()!= GL_NO_ERROR);
-}
-
-static bool glLogCall(){
-    while(GLenum error = glGetError()){
-        std::cerr << "\n[OpenGL Error] (" << error << ")\n"
-                  << "----------------------------------------\n";
-        return false;
-    }
-    return true;
-}
+// #undef DEBUG
 
 struct ShaderProgramSource{
     std::string VertexSource;
@@ -120,7 +104,15 @@ int main(){
         glfwTerminate();
         return -1;
     }
+    // make the window's context current
     glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(1); // enable vsync
+    #ifdef __APPLE__
+        gladLoadGL();
+    #else
+        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    #endif
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -152,16 +144,26 @@ int main(){
     glCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
     glCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
+
     unsigned int VBO;
     glCall(glGenBuffers(1, &VBO));
     glCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
     glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 
+
+
+    VertexBuffer vb(vertices, sizeof(vertices));
+    // already bounded in the intialization of VertexBuffer
+    // multiple VBO => manual binding of choosing => handled by the vertex array anyways lol
+
     glCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0));
     glCall(glEnableVertexAttribArray(0));
 
+    ElementIndexBuffer ebo(indices, sizeof(indices)); // similar to VBO
+
+    
     //shader
-    ShaderProgramSource source = ParseShader("res/Shaders/Basic.shader");
+    ShaderProgramSource source = ParseShader("../res/Shaders/Basic.shader");
     std::cout << "Vertex" << std::endl;
     std::cout << source.VertexSource << std::endl;
     std::cout << "Fragment" << std::endl;
@@ -172,13 +174,24 @@ int main(){
     
     float tempRed = 0.0f;
     float increment = 0.05f;
-    // render loops
+
+
+    glCall( glUseProgram(0) );
+    glCall( glBindBuffer(GL_ARRAY_BUFFER, 0) );
+    glCall( glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0) );
+    glCall( glBindVertexArray(0) );
+    // render loopss
     while(!glfwWindowShouldClose(window)){
         processInput(window);
 
         // rendering command
         //glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // <-- state setting function
         glCall(glClear(GL_COLOR_BUFFER_BIT)); // <-- state using function
+
+        // bind and do stuff
+        glCall(glUseProgram(shader));
+        glCall(glBindVertexArray(VAO));
+        ebo.Bind();
 
 
         // 6 being the number of INDICES; nullptr cuz we bounded the EBO earlier, so no need to specify the vertices again
@@ -190,6 +203,8 @@ int main(){
         float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
         glCall(int vertexColorLocation = glGetUniformLocation(shader, "ourColor"));
         glCall(glUniform4f(vertexColorLocation, tempRed, greenValue, 0.0f, 1.0f));
+
+        // draw call draws the entire element  -> cant change color cuz glUniform4f is state setting function
 
         // update red value
         tempRed += increment;

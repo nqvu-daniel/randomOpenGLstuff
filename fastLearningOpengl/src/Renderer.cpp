@@ -13,3 +13,15 @@ bool glLogCall(){
     }
     return true;
 }
+
+
+void Renderer::Clear() const{
+    glCall(glClear(GL_COLOR_BUFFER_BIT));
+}
+void Renderer::Draw(const VertexArray& va, const ElementIndexBuffer& ib, const Shader& shader) const{
+
+            shader.Bind();
+            va.Bind();
+            ib.Bind();
+            glCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
+}

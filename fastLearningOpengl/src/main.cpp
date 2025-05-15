@@ -11,6 +11,8 @@
 #include "ElementIndexBuffer.h"
 #include "VertexArray.h"
 #include "Shader.h"
+#include "VertexBufferLayout.h"
+#include "Texture.h"
 // #undef DEBUG
 
 
@@ -55,10 +57,10 @@ int main(){
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.5f,  0.5f, 0.0f,
-         -0.5f, 0.5f, 0.0f
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
+         0.5f,  0.5f, 0.0f, 1.0f, 1.0f,
+         -0.5f, 0.5f, 0.0f, 0.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -68,11 +70,15 @@ int main(){
     };
 
 
+    glCall(glEnable(GL_BLEND));
+    glCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
     VertexArray VAO;
 
     VertexBuffer vb(vertices, sizeof(vertices));
     VertexBufferLayout layout;
     layout.Push<float>(3); // 3 floats per vertex
+    layout.Push<float>(2); // 2 floats per vertex for texture coordinates
     VAO.AddBuffer(vb, layout);
     // already bounded in the intialization of VertexBuffer
     // multiple VBO => manual binding of choosing => handled by the vertex array anyways lol
@@ -82,19 +88,14 @@ int main(){
     ElementIndexBuffer ebo(indices, sizeof(indices)); // similar to VBO
 
     
-    //shader
- //   ShaderProgramSource source = ParseShader("../res/Shaders/Basic.shader");
- //   std::cout << "Vertex" << std::endl;
- //   std::cout << source.VertexSource << std::endl;
- //   std::cout << "Fragment" << std::endl;
- //   std::cout << source.FragmentSource << std::endl;
-//
- //    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
- //   glCall(glUseProgram(shader));
 
     Shader shader("../res/Shaders/Basic.shader");
     shader.Bind();
 
+    Texture texture("../res/Textures/cute.png");
+    texture.Bind(); // defaulted to slot 0
+
+    shader.SetUniform1i("u_Texture", 0); // slot 0 for the texture
     
     float tempRed = 0.0f;
     float increment = 0.05f;
@@ -106,39 +107,25 @@ int main(){
     VAO.Unbind();
     shader.Unbind();
 
+    Renderer renderer;
+
     // render loopss
     while(!glfwWindowShouldClose(window)){
         processInput(window);
 
-        // rendering command
-        //glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // <-- state setting function
-        glCall(glClear(GL_COLOR_BUFFER_BIT)); // <-- state using function
+        renderer.Clear();
 
-        // bind and do stuff
         shader.Bind();
-        // bind vertex array
-        VAO.Bind();
-        ebo.Bind();
-
-
-        // 6 being the number of INDICES; nullptr cuz we bounded the EBO earlier, so no need to specify the vertices again
-        glCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-        // would give nothing if type is GL_INT => ALL index buffer must be of type GL_UNSIGNED_INT
+        renderer.Draw(VAO, ebo, shader);
 
         // update shader uniform
         double  timeValue = glfwGetTime();
         float greenValue = static_cast<float>(sin(timeValue) / 2.0 + 0.5);
 
-
-        //new shader
         shader.SetUniform4f("ourColor", tempRed, greenValue, 0.0f, 1.0f);
-        // legacy code
-        //glCall(int vertexColorLocation = glGetUniformLocation(shader, "ourColor"));
-        //glCall(glUniform4f(vertexColorLocation, tempRed, greenValue, 0.0f, 1.0f));
 
-        // draw call draws the entire element  -> cant change color cuz glUniform4f is state setting function
 
-        // update red value
+
         tempRed += increment;
         if (tempRed > 1.0f){
             increment = -0.05f;

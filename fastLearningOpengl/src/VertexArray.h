@@ -1,7 +1,8 @@
 #pragma once
 
 #include "VertexBuffer.h"
-#include "VertexBufferLayout.h"
+
+class VertexBufferLayout; // forward declaration to avoid circular dependency
 
 class VertexArray{
 private:

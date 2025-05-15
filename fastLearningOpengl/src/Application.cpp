@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+
+
 #include "Renderer.h"
 #define DEBUG
 
@@ -13,6 +15,10 @@
 #include "Shader.h"
 #include "VertexBufferLayout.h"
 #include "Texture.h"
+
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 // #undef DEBUG
 
 
@@ -77,17 +83,14 @@ int main(){
 
     VertexBuffer vb(vertices, sizeof(vertices));
     VertexBufferLayout layout;
-    layout.Push<float>(3); // 3 floats per vertex
+    layout.Push<float>(3); // 3 floats per vertex for pos
     layout.Push<float>(2); // 2 floats per vertex for texture coordinates
     VAO.AddBuffer(vb, layout);
-    // already bounded in the intialization of VertexBuffer
-    // multiple VBO => manual binding of choosing => handled by the vertex array anyways lol
 
 
+    ElementIndexBuffer ebo(indices, sizeof(indices)); 
 
-    ElementIndexBuffer ebo(indices, sizeof(indices)); // similar to VBO
-
-    
+    glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
 
     Shader shader("../res/Shaders/Basic.shader");
     shader.Bind();
@@ -96,6 +99,8 @@ int main(){
     texture.Bind(); // defaulted to slot 0
 
     shader.SetUniform1i("u_Texture", 0); // slot 0 for the texture
+
+    shader.SetUniformMat4f("u_MVP", proj);
     
     float tempRed = 0.0f;
     float increment = 0.05f;

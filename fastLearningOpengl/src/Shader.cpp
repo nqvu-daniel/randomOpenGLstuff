@@ -7,6 +7,7 @@
 
 
 
+
 Shader::Shader(const std::string& filepath)
     : m_FilePath(filepath), m_RendererID(0)
 {
@@ -114,6 +115,12 @@ void Shader::SetUniform1i(const std::string& name, int value)
 void Shader::SetUniform1f(const std::string& name, float value)
 {
     glCall(glUniform1f(GetUniformLocation(name), value));
+}
+
+// if math library is row major, then GL_TRUE, if column major, then GL_FALSE
+void Shader::SetUniformMat4f(const std::string& name, const glm::mat4& matrix)
+{
+    glCall(glUniformMatrix4fv(GetUniformLocation(name), 1, GL_FALSE, &matrix[0][0]));
 }
 
 int Shader::GetUniformLocation(const std::string& name)

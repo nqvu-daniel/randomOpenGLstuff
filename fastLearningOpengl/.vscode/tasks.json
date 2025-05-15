@@ -24,6 +24,9 @@
 		  // sources
 		  "${workspaceFolder}/src/*.cpp",
 		  "${workspaceFolder}/glad.c",
+
+		  // include vendor
+		  "-I","${workspaceFolder}/src/vendor/",
   
 		  // output executable
 		  "-o", "${workspaceFolder}/app",

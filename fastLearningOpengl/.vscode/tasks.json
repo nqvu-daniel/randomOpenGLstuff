@@ -16,6 +16,8 @@
   
 		  // include path
 		  "-I", "${workspaceFolder}/dependencies/include",
+		  "-I", "${workspaceFolder}/src/vendor",
+		  "-I", "${workspaceFolder}/src/vendor/imgui",
   
 		  // link path + library
 		  "-L", "${workspaceFolder}/dependencies/library",
@@ -24,9 +26,15 @@
 		  // sources
 		  "${workspaceFolder}/src/*.cpp",
 		  "${workspaceFolder}/glad.c",
-
-		  // include vendor
-		  "-I","${workspaceFolder}/src/vendor/",
+		  
+		  // ImGui source files
+		  "${workspaceFolder}/src/vendor/imgui/imgui.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_demo.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_draw.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_tables.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_widgets.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_impl_glfw.cpp",
+		  "${workspaceFolder}/src/vendor/imgui/imgui_impl_opengl3.cpp",
   
 		  // output executable
 		  "-o", "${workspaceFolder}/app",
@@ -49,5 +57,4 @@
 		"detail": "Compiler: /usr/bin/clang++"
 	  }
 	]
-  }
-  
+}

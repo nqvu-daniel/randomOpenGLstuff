@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 
-
+#define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #include "Renderer.h"
 #define DEBUG
 
@@ -19,8 +19,14 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 // #undef DEBUG
 
+
+// NOTE: you should build this using cmake instead of using vscode c++ build task system
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -62,6 +68,14 @@ int main(){
     glCall(glViewport(0, 0, 800, 600));
     glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
 
+    // tools version
+    std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "glfw version: " << glfwGetVersionString() << std::endl;
+    std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "GPU: " << glGetString(GL_VENDOR) << std::endl;
+
+
+
     float vertices[] = {
         -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
          0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
@@ -91,16 +105,19 @@ int main(){
     ElementIndexBuffer ebo(indices, sizeof(indices)); 
 
     glm::mat4 proj = glm::ortho(-2.0f, 2.0f, -1.5f, 1.5f, -1.0f, 1.0f);
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(1, 0, 0));
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(1, 1, 0));
+    glm::mat4 mvp = proj * view * model;
 
     Shader shader("../res/Shaders/Basic.shader");
     shader.Bind();
-
+ 
     Texture texture("../res/Textures/cute.png");
     texture.Bind(); // defaulted to slot 0
 
     shader.SetUniform1i("u_Texture", 0); // slot 0 for the texture
 
-    shader.SetUniformMat4f("u_MVP", proj);
+    shader.SetUniformMat4f("u_MVP", mvp);
     
     float tempRed = 0.0f;
     float increment = 0.05f;
@@ -114,11 +131,42 @@ int main(){
 
     Renderer renderer;
 
-    // render loopss
+
+
+
+    // Imgui initialization
+    // Setup Dear ImGui context (literally just copied this off docs)
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
+    ImGui_ImplOpenGL3_Init(nullptr);
+
+
+    	std::cout << "Info: ImGui version: " << IMGUI_VERSION;
+        #ifdef IMGUI_HAS_DOCK
+        	std::cout << " +docking";
+        #endif
+        #ifdef IMGUI_HAS_VIEWPORT
+        	std::cout << " +viewport";
+        #endif
+        	std::cout << std::endl << std::endl;
+
+    // render loops
     while(!glfwWindowShouldClose(window)){
         processInput(window);
 
         renderer.Clear();
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow(); // Show demo window! :)
 
         shader.Bind();
         renderer.Draw(VAO, ebo, shader);
@@ -138,13 +186,48 @@ int main(){
             increment = 0.05f;
         }
 
+        bool show_demo_window = true;
+        bool show_another_window = false;
+        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::End();
+        }
+
+
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());    
 
         // event checks n calls; buffer swap
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    //glCall(glDeleteProgram(shader)); <- destructor called
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
 };

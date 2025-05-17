@@ -14,6 +14,8 @@ It's messy obvi but its my stuff nonetheless so i love it <3
 - CMake-based build system for easy setup
 
 # Huge note that i have not tested this on linux or windows, so its mac only rn
+ huge shoutout to ChatGPT for helping me fixing these fuckass bugs! love OpenGL and Apple's half baked depreciated OpenGL implementation
+ shoutout to my determination 
 
 ## Getting Started
 
@@ -54,7 +56,3 @@ I hate myself!
 MIT License.  
 See [GLFW](https://www.glfw.org/) and [glad](https://glad.dav1d.de/) for their respective licenses.
 
----
-
-Happy coding!  
-May your FPS be high and your bugs be few. 🐱‍👓

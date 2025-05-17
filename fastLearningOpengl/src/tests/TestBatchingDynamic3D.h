@@ -4,15 +4,17 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include <memory>
-// #include <vector> // Not strictly needed in the header if only used in .cpp
-
-// Include necessary headers directly
 #include "VertexArray.h"
 #include "ElementIndexBuffer.h"
 #include "VertexBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "Renderer.h" // Renderer is used as a member
+#include "Renderer.h"
+
+
+enum class CubeFace {
+    Front, Back, Left, Right, Top, Bottom
+};
 
 namespace test
 {
@@ -36,16 +38,57 @@ public:
         float textureID; // Texture ID
     };
 
-    // im too lazy to change this
-    static std::array<Vertex, 4> CreateQuad(float x, float y, float size, float textureID)
+    // Updated CreateQuad to generate faces of a cube
+    static std::array<Vertex, 4> CreateQuad(const glm::vec3& center, float size, CubeFace face, float textureID, const std::array<float, 4>& color = {1.0f, 1.0f, 1.0f, 1.0f})
     {   
-        size = 100.0f; // TODO: remove this
-        // legend : x, y, z, u, v, r, g, b, a, ID
-        Vertex v0 = {{x, y, 0.0f}, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, textureID};
-        Vertex v1 = {{x + size, y, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, textureID};
-        Vertex v2 = {{x + size, y + size, 0.0f}, {1.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, textureID};
-        Vertex v3 = {{x, y + size, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, textureID};
-        return {v0, v1, v2, v3};
+        std::array<Vertex, 4> vertices;
+        float hs = size / 2.0f;
+
+        // Standard texture coordinates (BottomLeft, BottomRight, TopRight, TopLeft)
+        std::array<float, 2> tc0 = {0.0f, 0.0f}; 
+        std::array<float, 2> tc1 = {1.0f, 0.0f};
+        std::array<float, 2> tc2 = {1.0f, 1.0f};
+        std::array<float, 2> tc3 = {0.0f, 1.0f};
+
+        switch (face) {
+            case CubeFace::Front: // +Z normal, CCW: BL, BR, TR, TL
+                vertices[0] = {{center.x - hs, center.y - hs, center.z + hs}, tc0, color, textureID};
+                vertices[1] = {{center.x + hs, center.y - hs, center.z + hs}, tc1, color, textureID};
+                vertices[2] = {{center.x + hs, center.y + hs, center.z + hs}, tc2, color, textureID};
+                vertices[3] = {{center.x - hs, center.y + hs, center.z + hs}, tc3, color, textureID};
+                break;
+            case CubeFace::Back: // -Z normal, CCW from outside: BL, TL, TR, BR ((-hs,-hs,-hs), (-hs,+hs,-hs), (+hs,+hs,-hs), (+hs,-hs,-hs))
+                vertices[0] = {{center.x - hs, center.y - hs, center.z - hs}, tc0, color, textureID}; // BL
+                vertices[1] = {{center.x - hs, center.y + hs, center.z - hs}, tc3, color, textureID}; // TL
+                vertices[2] = {{center.x + hs, center.y + hs, center.z - hs}, tc2, color, textureID}; // TR
+                vertices[3] = {{center.x + hs, center.y - hs, center.z - hs}, tc1, color, textureID}; // BR
+                break;
+            case CubeFace::Left: // -X normal, CCW from outside: BL, BR, TR, TL ((-hs,-hs,-hs), (-hs,-hs,+hs), (-hs,+hs,+hs), (-hs,+hs,-hs))
+                vertices[0] = {{center.x - hs, center.y - hs, center.z - hs}, tc0, color, textureID}; // Bottom-Back
+                vertices[1] = {{center.x - hs, center.y - hs, center.z + hs}, tc1, color, textureID}; // Bottom-Front
+                vertices[2] = {{center.x - hs, center.y + hs, center.z + hs}, tc2, color, textureID}; // Top-Front
+                vertices[3] = {{center.x - hs, center.y + hs, center.z - hs}, tc3, color, textureID}; // Top-Back
+                break;
+            case CubeFace::Right: // +X normal, CCW from outside: BL, TL, TR, BR ((+hs,-hs,+hs), (+hs,+hs,+hs), (+hs,+hs,-hs), (+hs,-hs,-hs))
+                vertices[0] = {{center.x + hs, center.y - hs, center.z + hs}, tc0, color, textureID}; // Bottom-Front
+                vertices[1] = {{center.x + hs, center.y + hs, center.z + hs}, tc3, color, textureID}; // Top-Front
+                vertices[2] = {{center.x + hs, center.y + hs, center.z - hs}, tc2, color, textureID}; // Top-Back
+                vertices[3] = {{center.x + hs, center.y - hs, center.z - hs}, tc1, color, textureID}; // Bottom-Back
+                break;
+            case CubeFace::Top: // +Y normal, CCW from outside: BL, BR, TR, TL ((-hs,+hs,+hs), (+hs,+hs,+hs), (+hs,+hs,-hs), (-hs,+hs,-hs))
+                vertices[0] = {{center.x - hs, center.y + hs, center.z + hs}, tc0, color, textureID}; // Front-Left
+                vertices[1] = {{center.x + hs, center.y + hs, center.z + hs}, tc1, color, textureID}; // Front-Right
+                vertices[2] = {{center.x + hs, center.y + hs, center.z - hs}, tc2, color, textureID}; // Back-Right
+                vertices[3] = {{center.x - hs, center.y + hs, center.z - hs}, tc3, color, textureID}; // Back-Left
+                break;
+            case CubeFace::Bottom: // -Y normal, CCW from outside: BL, TL, TR, BR ((-hs,-hs,-hs), (-hs,-hs,+hs), (+hs,-hs,+hs), (+hs,-hs,-hs))
+                vertices[0] = {{center.x - hs, center.y - hs, center.z - hs}, tc0, color, textureID}; // Back-Left
+                vertices[1] = {{center.x - hs, center.y - hs, center.z + hs}, tc3, color, textureID}; // Front-Left
+                vertices[2] = {{center.x + hs, center.y - hs, center.z + hs}, tc2, color, textureID}; // Front-Right
+                vertices[3] = {{center.x + hs, center.y - hs, center.z - hs}, tc1, color, textureID}; // Back-Right
+                break;
+        }
+        return vertices;
     };
 
 
@@ -63,8 +106,11 @@ private:
     glm::mat4 m_model; // Model matrix for transformations
 
     Renderer m_renderer; // Renderer member
-    float m_quad0position[2] = {100.0f, 50.0f};
-    float m_quad1position[2] = {350.0f, 50.0f};
+    
+    // New members for cube properties
+    glm::vec3 m_cubeCenter;
+    float m_cubeSize;
+    std::array<float, 4> m_cubeColor;
 };
 
 } // namespace test

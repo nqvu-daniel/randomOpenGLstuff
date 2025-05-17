@@ -32,7 +32,8 @@ private:
     std::unique_ptr<ElementIndexBuffer> m_indexBuffer;
     std::unique_ptr<VertexBuffer> m_vertexBuffer;
     std::unique_ptr<Shader> m_shader;
-    std::unique_ptr<Texture> m_texture;
+    std::unique_ptr<Texture> m_texture0;
+    std::unique_ptr<Texture> m_texture1;
 
     glm::mat4 m_proj;
     glm::mat4 m_view;

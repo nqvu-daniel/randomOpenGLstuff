@@ -2,3 +2,4 @@ src/vendor/glm
 build
 .vscode
 .cache
+imgui.ini

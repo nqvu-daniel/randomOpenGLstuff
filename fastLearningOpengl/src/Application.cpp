@@ -16,14 +16,14 @@
 #include "tests/TestBatching.h"
 #include "tests/TestBatchingDynamic.h"
 #include "tests/TestBatchingDynamic3D.h"
+#include "tests/TestCamera.h" // Added for TestCameraSuite
 
-
-// #undef DEBUG
-
-// NOTE: you should build this using cmake instead of using vscode c++ build task system
+float g_deltaTime = 0.0f; // Time between current frame and last frame
+float g_lastFrame = 0.0f; // Time of last frame
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void processInput(GLFWwindow *window);
+// Modified processInput to pass key directly
+void processInput(GLFWwindow *window, test::Test* currentTest, float deltaTime);
 
 int main(){
 
@@ -107,10 +107,18 @@ int main(){
     testMenu->RegisterTest<test::Batching>("Batching");
     testMenu->RegisterTest<test::BatchingDynamic>("Batching Dynamic");
     testMenu->RegisterTest<test::BatchingDynamic3D>("Batching Dynamic 3D");
+    testMenu->RegisterTest<test::TestCameraSuite>("Camera Test Suite");
+
 
     // render loops
     while(!glfwWindowShouldClose(window)){
-        processInput(window);
+        // Calculate delta time for consistent movement speed
+        float currentFrame = static_cast<float>(glfwGetTime());
+        g_deltaTime = currentFrame - g_lastFrame;
+        g_lastFrame = currentFrame;
+
+        // Pass currentTest and deltaTime to processInput
+        processInput(window, currentTest, g_deltaTime); 
         
         glCall(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 
@@ -123,7 +131,7 @@ int main(){
         // ImGui::ShowDemoWindow(); 
 
         if (currentTest){
-            currentTest->OnUpdate(0.0f);
+            currentTest->OnUpdate(g_deltaTime); // Pass delta time to current test's OnUpdate
             currentTest->OnRender();
             ImGui::Begin("Tests");
             if (currentTest != testMenu){
@@ -161,8 +169,27 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glCall(glViewport(0,0,width,height));
 }
 
-void processInput(GLFWwindow *window){
-    if(glfwGetKey(window,GLFW_KEY_ESCAPE)==GLFW_PRESS){
+// Modified processInput to accept currentTest and deltaTime
+// It will now call TestCameraSuite::ProcessKeyboard if appropriate
+void processInput(GLFWwindow *window, test::Test* currentTest, float deltaTime) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if (auto* cameraTest = dynamic_cast<test::TestCameraSuite*>(currentTest)) {
+        // Define a lambda to check and process each key
+        auto handle_key = [&](int key) {
+            if (glfwGetKey(window, key) == GLFW_PRESS) {
+                cameraTest->ProcessKeyboard(key, deltaTime);
+            }
+        };
+
+        handle_key(GLFW_KEY_W);
+        handle_key(GLFW_KEY_S);
+        handle_key(GLFW_KEY_A);
+        handle_key(GLFW_KEY_D);
+        handle_key(GLFW_KEY_SPACE);      // For moving up
+        handle_key(GLFW_KEY_LEFT_SHIFT); // For moving down
+        // Add other keys if TestCameraSuite::ProcessKeyboard handles them
     }
 }

@@ -16,6 +16,11 @@ It's messy obvi but its my stuff nonetheless so i love it <3
 # Huge note that i have not tested this on linux or windows, so its mac only rn
  huge shoutout to ChatGPT for helping me fixing these fuckass bugs! love OpenGL and Apple's half baked depreciated OpenGL implementation
  shoutout to my determination 
+ 
+ also texture2D broke somewhere along the line (it used to work a few commits ago) but no one cares about that right, we all love batch rendering and stuff
+
+
+
 
 ## Getting Started
 

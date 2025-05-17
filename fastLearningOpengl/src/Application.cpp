@@ -22,6 +22,8 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
+#include "tests/TestBatching.h"
 
 // #undef DEBUG
 
@@ -108,6 +110,8 @@ int main(){
     currentTest = testMenu;
 
     testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+    testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
+    testMenu->RegisterTest<test::Batching>("Batching");
 
     // render loops
     while(!glfwWindowShouldClose(window)){

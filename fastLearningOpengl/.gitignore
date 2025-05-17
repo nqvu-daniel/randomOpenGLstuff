@@ -1,2 +1,4 @@
 src/vendor/glm
 build
+.vscode
+.cache

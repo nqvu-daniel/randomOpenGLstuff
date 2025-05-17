@@ -9,7 +9,7 @@ uniform mat4 u_MVP; // model view projection matrix
 
 void main()
 {
-   gl_Position = position * u_MVP;
+   gl_Position = u_MVP * position ;
    v_TexCoord = texCoord;
 }
 

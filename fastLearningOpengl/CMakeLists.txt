@@ -25,6 +25,7 @@ target_include_directories(imgui PUBLIC
 include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/include
     ${CMAKE_SOURCE_DIR}/src/vendor
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 # Link directories

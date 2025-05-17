@@ -92,34 +92,55 @@ int main(){
     ImGui_ImplOpenGL3_Init(nullptr);
 
 
-    	std::cout << "Info: ImGui version: " << IMGUI_VERSION;
-        #ifdef IMGUI_HAS_DOCK
-        	std::cout << " +docking";
-        #endif
-        #ifdef IMGUI_HAS_VIEWPORT
-        	std::cout << " +viewport";
-        #endif
-        	std::cout << std::endl << std::endl;
+    std::cout << "Info: ImGui version: " << IMGUI_VERSION;
+    #ifdef IMGUI_HAS_DOCK
+    	std::cout << " +docking";
+    #endif
+    #ifdef IMGUI_HAS_VIEWPORT
+    	std::cout << " +viewport";
+    #endif
+    	std::cout << std::endl << std::endl;
 
 
 
+    test::Test* currentTest = nullptr;
+    test::TestMenu* testMenu = new test::TestMenu(currentTest);
+    currentTest = testMenu;
 
-        test::TestClearColor test;
+    testMenu->RegisterTest<test::TestClearColor>("Clear Color");
 
     // render loops
     while(!glfwWindowShouldClose(window)){
         processInput(window);
+        
+        glCall(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
 
         renderer.Clear();
 
-        test.OnUpdate(0.0f);
-        test.OnRender();
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         // ImGui::ShowDemoWindow(); 
-        test.OnImGuiRender();
+
+        if (currentTest){
+            currentTest->OnUpdate(0.0f);
+            currentTest->OnRender();
+            ImGui::Begin("Tests");
+            if (currentTest != testMenu){
+                if (ImGui::Button("<-")){
+                    delete currentTest;
+                    currentTest = testMenu;
+                }
+            }
+            currentTest->OnImGuiRender();
+            ImGui::End();
+        } else {
+            ImGui::Begin("Tests");
+            ImGui::Text("No test selected");
+            ImGui::End();
+        }
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

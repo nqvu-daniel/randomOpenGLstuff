@@ -7,15 +7,7 @@
 #include "Renderer.h"
 #define DEBUG
 
-#include "VertexBuffer.h"
-#include "ElementIndexBuffer.h"
-#include "VertexArray.h"
-#include "Shader.h"
-#include "VertexBufferLayout.h"
-#include "Texture.h"
 
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
@@ -24,6 +16,8 @@
 #include "tests/TestClearColor.h"
 #include "tests/TestTexture2D.h"
 #include "tests/TestBatching.h"
+#include "tests/TestBatchingDynamic.h"
+
 
 // #undef DEBUG
 
@@ -112,6 +106,7 @@ int main(){
     testMenu->RegisterTest<test::TestClearColor>("Clear Color");
     testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
     testMenu->RegisterTest<test::Batching>("Batching");
+    testMenu->RegisterTest<test::BatchingDynamic>("Batching Dynamic");
 
     // render loops
     while(!glfwWindowShouldClose(window)){

@@ -107,10 +107,11 @@ private:
 
     Renderer m_renderer; // Renderer member
     
-    // New members for cube properties
-    glm::vec3 m_cubeCenter;
+    // Cube properties
+    glm::vec3 m_cubeCenter; // Base center for all cubes
     float m_cubeSize;
     std::array<float, 4> m_cubeColor;
+    std::vector<glm::vec3> m_cubeOffsets; // Stores offsets from m_cubeCenter for multiple cube instances
 };
 
 } // namespace test

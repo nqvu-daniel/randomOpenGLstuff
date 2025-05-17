@@ -17,6 +17,7 @@
 #include "tests/TestTexture2D.h"
 #include "tests/TestBatching.h"
 #include "tests/TestBatchingDynamic.h"
+#include "tests/TestBatchingDynamic3D.h"
 
 
 // #undef DEBUG
@@ -107,6 +108,7 @@ int main(){
     testMenu->RegisterTest<test::TestTexture2D>("2D Texture");
     testMenu->RegisterTest<test::Batching>("Batching");
     testMenu->RegisterTest<test::BatchingDynamic>("Batching Dynamic");
+    testMenu->RegisterTest<test::BatchingDynamic3D>("Batching Dynamic 3D");
 
     // render loops
     while(!glfwWindowShouldClose(window)){

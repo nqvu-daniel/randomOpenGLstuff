@@ -1,9 +1,10 @@
-#include "TestBatchingDynamic.h"
+#include "TestBatchingDynamic3D.h"
 
 #include "Renderer.h"
 #include "VertexBufferLayout.h"
 #include "imgui/imgui.h"
 #include "Texture.h"
+#include "glm/gtc/matrix_transform.hpp" // For glm::lookAt and glm::perspective
 
 #include <tuple>
 #include <vector>
@@ -13,10 +14,13 @@ namespace test
 {
 
 
-BatchingDynamic::BatchingDynamic()
-    : m_proj(glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f)),
+BatchingDynamic3D::BatchingDynamic3D()
+    :
+    
+    m_proj(glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f)),
       m_view(glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0))),
-      m_translation(200.0f, 150.0f, 0.0f)
+      m_translation(200.0f, 150.0f, 0.0f),
+      m_model(glm::translate(glm::mat4(1.0f), m_translation))
 {
 
     m_vao = std::make_unique<VertexArray>();
@@ -24,7 +28,7 @@ BatchingDynamic::BatchingDynamic()
 
     constexpr auto magic_count = 1000u; // magic number for the allocated number of vertices!
 
-    m_vertexBuffer = std::make_unique<VertexBuffer>(nullptr, sizeof(BatchingDynamic::Vertex) * magic_count);
+    m_vertexBuffer = std::make_unique<VertexBuffer>(nullptr, sizeof(BatchingDynamic3D::Vertex) * magic_count);
     m_vertexBuffer->Bind();
 
 
@@ -37,32 +41,33 @@ BatchingDynamic::BatchingDynamic()
     m_vao->AddBuffer(*m_vertexBuffer, layout); 
 
     
-    m_shader = std::make_unique<Shader>("res/Shaders/BatchColor.shader"); 
+    m_shader = std::make_unique<Shader>("res/Shaders/BatchColor3D.shader"); 
     m_shader->Bind();
     m_texture0 = std::make_unique<Texture>("res/Textures/cute.png");
     m_texture0->Bind(0); // Bind texture to slot 0
-    //m_shader->SetUniform1i("u_Texture", 0); // Tell shader to use texture slot 0
+    // m_shader->SetUniform1i("u_Texture", 0); // Tell shader to use texture slot 0 OLD UNUSED
     m_texture1 = std::make_unique<Texture>("res/Textures/ChernoLogo.png"); 
     m_texture1->Bind(1); 
 
 
 }
 
-BatchingDynamic::~BatchingDynamic()
+BatchingDynamic3D::~BatchingDynamic3D()
 {
     // Unique_ptrs will handle deletion
+    glCall(glDisable(GL_DEPTH_TEST)); // Disable depth test if it was enabled here
 }
 
-void BatchingDynamic::OnUpdate([[maybe_unused]] float deltaTime)
+void BatchingDynamic3D::OnUpdate([[maybe_unused]] float deltaTime)
 {
     // No per-frame updates needed for this simple example beyond ImGui interaction
         // bam i used it 
-    auto q0 = CreateQuad(m_quad0position[0], m_quad0position[1], 50.0f, 0.0f);
-    auto q1 = CreateQuad(m_quad1position[0], m_quad1position[1], 50.0f, 1.0f);
+    auto q0 = CreateQuad(m_quad0position[0], m_quad0position[1], 1.0f, 0.0f); // Reduced quad size
+    auto q1 = CreateQuad(m_quad1position[0], m_quad1position[1], 1.0f, 1.0f); // Reduced quad size
     // maybe ill update this to be dynamic later
 
     std::vector<Vertex> batched_pos(q0.size() + q1.size()); // Reserve space for the combined vertices
-    memcpy(batched_pos.data()/*            */, q0.data(), q0.size() * sizeof(Vertex));
+    memcpy(batched_pos.data(), q0.data(), q0.size() * sizeof(Vertex));
     memcpy(batched_pos.data() + q0.size(), q1.data(), q1.size() * sizeof(Vertex));
 
     std::vector<unsigned int>quad0_indices = {0, 1, 2, 2, 3, 0};
@@ -72,24 +77,27 @@ void BatchingDynamic::OnUpdate([[maybe_unused]] float deltaTime)
     std::vector<unsigned int> batched_indices(quad0_indices);
     std::transform(quad1_indices.begin(), quad1_indices.end(), std::back_inserter(batched_indices),
                    [&](const auto &val){return val + q0.size();});
-                   //[offset = quad1_indices.size()](unsigned int index) { return index + offset; });
 
     m_indexBuffer = std::make_unique<ElementIndexBuffer>(batched_indices.data(), unsigned(batched_indices.size()));
     m_vertexBuffer->BufferSubData(batched_pos.data(), unsigned(batched_pos.size() * sizeof(Vertex)));
 }
 
-void BatchingDynamic::OnRender()
+void BatchingDynamic3D::OnRender()
 {
+    glCall(glEnable(GL_DEPTH_TEST)); // Enable depth testing for 3D
     glCall(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
-    glCall(glClear(GL_COLOR_BUFFER_BIT));
+    glCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)); // Clear depth buffer as well
 
     m_texture0->Bind(0);
     m_texture1->Bind(1);
     m_shader->Bind();
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), m_translation);
-    glm::mat4 mvp = m_proj * m_view * model;
-    m_shader->SetUniformMat4f("u_MVP", mvp);
+    // Update model matrix based on ImGui translation
+    m_model = glm::translate(glm::mat4(1.0f), m_translation);
+    
+    m_shader->SetUniformMat4f("model", m_model);
+    m_shader->SetUniformMat4f("view", m_view);
+    m_shader->SetUniformMat4f("projection", m_proj);
     m_shader->SetUniformVec1i("u_Textures", std::vector<int>{0, 1}); // Set texture IDs for the shader
     m_vao->Bind();
     m_indexBuffer->Bind();
@@ -98,7 +106,7 @@ void BatchingDynamic::OnRender()
     m_renderer.Draw(*m_vao, *m_indexBuffer, *m_shader);
 }
 
-void BatchingDynamic::OnImGuiRender()
+void BatchingDynamic3D::OnImGuiRender()
 {
     ImGui::SliderFloat3("Batch Translation", &m_translation.x, 0.0f, 960.0f - 50.0f); // Adjust max range as needed
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

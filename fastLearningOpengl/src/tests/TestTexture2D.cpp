@@ -37,11 +37,11 @@ namespace test{
 
     m_VAO->AddBuffer(*m_VBO, layout);
 
-    m_Shader = std::make_unique<Shader>("res/Shaders/Basic.shader");
+    m_Shader = std::make_unique<Shader>("res/Shaders/BasicLegacy.shader");
     m_Shader->Bind();
     m_Texture = std::make_unique<Texture>("res/Textures/cute.png");
 
-    m_Shader->SetUniform1i("u_Texture", 0); // slot 0 for the texture
+    m_Shader->SetUniform1i("ourTexture", 0); // slot 0 for the texture
 
     }
     

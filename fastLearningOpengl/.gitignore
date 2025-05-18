@@ -1,5 +1,6 @@
-src/vendor/glm
 build
 .vscode
 .cache
 imgui.ini
+.idea
+app.dSYM
